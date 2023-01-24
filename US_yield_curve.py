@@ -19,45 +19,21 @@ db23 = data23.loc[:, ['Date', '1 Mo', '2 Mo', '3 Mo', '6 Mo', '1 Yr', '2 Yr', '3
 db = pd.concat([db23, db22])
 db = db.reset_index(drop=True)
 
-# Calculate different dates to extract datasets:
-# Today's date
-if date.today().weekday() == 5:
-    todaydate = date.today() - timedelta(days=1)
-elif date.today().weekday() == 6:
-    todaydate = date.today() - timedelta(days=2)
-else:
-    todaydate = date.today()
-
-# Yesterday's date
-if (todaydate - timedelta(days=1)).weekday() == 6:
-    yesterdaydate = todaydate - timedelta(days=3)
-else:
-    yesterdaydate = todaydate - timedelta(days=1)
-
-# Extract datasets
-# today dataset
-tday = str(todaydate)
-todaydate = todaydate.strftime("%m/%d/%Y")
-today = db.loc[db['Date'] == todaydate]
-today = pd.melt(today, id_vars='Date')
-# yesterday dataset
-yesterdaydate = yesterdaydate.strftime("%m/%d/%Y")
-yesterday = db.loc[db['Date'] == yesterdaydate]
-yesterday = pd.melt(yesterday, id_vars='Date')
-
+# Get data of different dates
+today = pd.melt(db.iloc[0:1, ], id_vars='Date')
+tday = today['Date'].iloc[0]
+tday = tday.replace("/", "-")
+yesterday = pd.melt(db.iloc[1:2, ], id_vars='Date')
+yday = yesterday['Date'].iloc[0]
+yday = yday.replace("/", "-")
 lastweek = pd.melt(db.iloc[4:5, ], id_vars='Date')
-
 last30days = pd.melt(db.iloc[29:30, ], id_vars='Date')
-
 q3 = db.loc[db['Date'] == '09/30/2022']
 q3 = pd.melt(q3, id_vars='Date')
-
 q2 = db.loc[db['Date'] == '06/30/2022']
 q2 = pd.melt(q2, id_vars='Date')
-
 q1 = db.loc[db['Date'] == '03/31/2022']
 q1 = pd.melt(q1, id_vars='Date')
-
 beginning22 = db.loc[db['Date'] == '01/03/2022']
 beginning22 = pd.melt(beginning22, id_vars='Date')
 
@@ -75,25 +51,15 @@ lastweek10v2 = float(lastweek.loc[lastweek['variable'] == '10 Yr', 'value']) - \
 # lastweek10v2 = round(lastweek10v2,3)
 
 
-'''
-newdb.set_index('variable', inplace=True)
-newdb.groupby('Date')['value'].plot(legend=True)
-'''
-'''
+# Plot1
 fig, ax = plt.subplots()
-for (colname,colval) in newdb.iteritems():
-    ax.plot('variable', 'value', data=newdb[colval], legend=colname)
-plt.show(block=True)
-'''
-
-fig, ax = plt.subplots()
-ax.plot('variable', 'value', data=today, linestyle='-', color='k', marker='+', label=todaydate)
-ax.plot('variable', 'value', data=yesterday, linestyle='-', color='r', marker='h', label=yesterdaydate)
+ax.plot('variable', 'value', data=today, linestyle='-', color='k', marker='+', label=tday)
+ax.plot('variable', 'value', data=yesterday, linestyle='-', color='r', marker='h', label=yday)
 ax.plot('variable', 'value', data=lastweek, linestyle='--', color='b', label='Last week')
 ax.plot('variable', 'value', data=last30days, linestyle='-.', color='y', label='Last month')
-# ax.plot('variable', 'value', data=q3, linestyle='-', marker='o',  color='k', label='09/30/2022')
-ax.plot('variable', 'value', data=q2, linestyle='-', marker='v', color='c', label='06/30/2022')
-# ax.plot('variable', 'value', data=q1, linestyle='-', marker='h', color='r', label='03/31/2022')
+# ax.plot('variable', 'value', data=q3, linestyle='-', marker='o',  color='k', label='09-30-2022')
+ax.plot('variable', 'value', data=q2, linestyle='-', marker='v', color='c', label='06-30-2022')
+# ax.plot('variable', 'value', data=q1, linestyle='-', marker='h', color='r', label='03-31-2022')
 ax.plot('variable', 'value', data=beginning22, linestyle='-', marker='_', color='m', label='Beginning 2022')
 plt.title('US Yield Curve')
 plt.xlabel('Maturities')
@@ -103,8 +69,7 @@ ax.text(0.1, 3, "10Y vs 2Y: \n" + f'Today: {today10v2:.2f} \n' +
 # plt.ylim(0,5,0.5)
 plt.ylabel('Yield %')
 plt.legend()
-plt.savefig('D:/Users/markm/Downloads/US_yield-curve_'+tday+'.png')
-# plt.savefig('US_yield-curve_'+tday+'.png')
+plt.savefig('US_yield-curve_'+tday+'.png')
 plt.show(block=True)
 
 # Calculate 10Y vs 2Y, 30Y vs 10Y and 30Y vs 2Y charts
@@ -123,16 +88,8 @@ yrmonth = db['Dates'].drop_duplicates()
 db['Date'] = pd.to_datetime(db['Date'])
 db['Date'] = db['Date'].dt.strftime("%b-%d-%y")
 
-'''
-# Create a series with unique months
-yrmonth = pd.to_datetime(db['Date'])
-yrmonth = yrmonth.dt.strftime("%b-%y")
-yrmonth = yrmonth.drop_duplicates()
-# yrmonth = yrmonth.to_frame()
-# yrmonth['row_num'] = np.arange(len(yrmonth))
-'''
 
-# Plot
+# Plot2
 fig, ax = plt.subplots()
 ax.plot('Date', 'Y10-Y2', data=db, linestyle='-', color='k', label='10Y vs 2Y')
 ax.plot('Date', 'Y30-Y2', data=db, linestyle='--', color='b', label='30Y vs 2Y')
@@ -152,16 +109,7 @@ ax.text(5, -0.8, "Lowest num: \n" + f'10Y vs 2Y: {min(db["Y10-Y2"]):.2f} \n' +
 # plt.ylim(0,5,0.5)
 plt.ylabel('Yield %')
 plt.legend()
-plt.savefig('D:/Users/markm/Downloads/US_yield-curve_comparison_'+tday+'.png')
-# plt.savefig('/US_yield-curve_comparison_'+tday+'.png')
+plt.savefig('/US_yield-curve_comparison_'+tday+'.png')
 plt.show(block=True)
-
-
-'''
- https://jakevdp.github.io/PythonDataScienceHandbook/04.10-customizing-ticks.html
- https://www.geeksforgeeks.org/matplotlib-axes-axes-set_xticklabels-in-python/
- https://pythonguides.com/matplotlib-x-axis-label/
- https://pynative.com/python-datetime-format-strftime/
- '''
 
 
